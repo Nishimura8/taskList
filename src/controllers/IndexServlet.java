@@ -33,11 +33,25 @@ public class IndexServlet extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	    int page = 1;
+        try {
+            page = Integer.parseInt(request.getParameter("page"));
+        } catch(NumberFormatException e) {}
+        
 	    EntityManager em = DBUtil.createEntityManager();
+	    
 
         List<Task> tasks = em.createNamedQuery("getAllTasks", Task.class)
-                                   .getResultList();
+                .setFirstResult(10 * (page - 1))
+                .setMaxResults(10)
+                .getResultList();
+        
+        long task_count = (long)em.createNamedQuery("getTaskCount", Long.class)
+                .getSingleResult();
+                                
         request.setAttribute("tasks", tasks);
+        request.setAttribute("task_count", task_count);     // 全件数
+        request.setAttribute("page", page);   
         em.close();
 
         RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/Task/index.jsp");
